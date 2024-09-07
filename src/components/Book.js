@@ -1,6 +1,26 @@
-import BookshelfChanger from "./BookshelfChanger";
+import { useEffect, useState } from "react";
+import * as Shelfs from "../utils/Shelfs";
 
-const Book = ({ book, onUpdate }) => {
+const Book = ({ book, handleShelfChanger }) => {
+
+    const [selectedShelf, setSelectedShelf] = useState("");
+    const [shelfs, setShelfs] = useState({});
+    const [currentBook, setCurrentBook] = useState({});
+
+    useEffect(() => {
+        if (book.shelf === "none") {
+            const { none, ...filtered } = Shelfs.getShelfs();
+            setShelfs(filtered);
+        } else {
+            setShelfs(Shelfs.getShelfs());
+        }
+        setCurrentBook(book);
+        setSelectedShelf(book.shelf);
+    }, [book]);
+
+    const getBookShelfChangerTitle = () => (
+        book?.shelf?.toLowerCase() === "none" ? "Add to..." : "Move to..."
+    );
 
     return (
         <div className="book">
@@ -10,13 +30,38 @@ const Book = ({ book, onUpdate }) => {
                     style={{
                         width: 128,
                         height: 193,
-                        backgroundImage: `url(${book['imageLinks']['thumbnail']})`,
+                        backgroundImage: `url(${book?.imageLinks?.thumbnail})`,
                     }}
                 ></div>
-                <BookshelfChanger book={book} onUpdate={onUpdate}/>
+                <div className="book-shelf-changer">
+                    <select
+                        id={currentBook.id}
+                        value={selectedShelf}
+                        onChange={(e) => handleShelfChanger(book, e.target.value)}
+                    >
+                        <option value="none" disabled>
+                            {
+                                getBookShelfChangerTitle()
+                            }
+                        </option>
+
+                        {
+                            Object.keys(shelfs).map((shelf) => (
+                                <option
+                                    key={shelf}
+                                    value={shelf}
+                                >
+                                    {shelfs[shelf]}
+                                </option>
+                            )
+                            )
+                        }
+                    </select>
+                </div>
             </div>
-            <div className="book-title">{book['title']}</div>
-            <div className="book-authors">{book['authors']}</div>
+            <div className="book-title">{currentBook['title']}</div>
+            <div className="book-authors">{currentBook['authors']}</div>
+            <div className="book-subtitle">{currentBook['subtitle']}</div>
         </div>
     )
 };
