@@ -1,41 +1,58 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import Book from "./Book";
+import * as BooksAPI from "../api/BooksAPI";
+import * as Shelfs from "../utils/Shelfs";
 
-const SearchPage = ({ onUpdate, onSearch }) => {
+const SearchPage = ({ navigator, maxResults }) => {
 
-    let navigate = useNavigate();
     const [query, setQuery] = useState("");
     const [books, setBooks] = useState([]);
 
     useEffect(() => {
+        // Check if the query is not null
         if (query) {
             const fetchBooks = async () => {
-                const results = await onSearch(query, 10);
-                setBooks(results || []);
+                try {
+                    const queriedBooks = await BooksAPI.search(query, maxResults);
+                    const currentBooks = await BooksAPI.getAll();
+
+                    // Add shelfs into the queriedBooks
+                    const queriedBooksWithShelf = Shelfs.mapShelfToQueriedBook(currentBooks, queriedBooks);
+                    setBooks(queriedBooksWithShelf);
+                } catch (error) {
+                    console.log(error);
+                }
             };
             fetchBooks();
         } else {
             setBooks([]);
         }
-    }, [query, onSearch]);
+    }, [query, maxResults]);
 
     const updateQuery = (query) => {
         setQuery(query.trim());
     }
 
-    const clearQuery = () => {
-        updateQuery("");
-    }
+    const updateShelf = async (book, shelf) => {
+        try {
+            // Update book shelf via API
+            await BooksAPI.update(book, shelf);
 
-    const handleUpdate = (book, shelf) => {
-        onUpdate(book, shelf);
+            // Filter and update shelf
+            setBooks((prevBooks) => {
+                return prevBooks.map((b) =>
+                    b.id === book.id ? { ...b, shelf } : b
+                );
+            });
+        } catch (error) {
+            console.log(error);
+        }
     }
 
     return (
         <div className="search-books">
             <div className="search-books-bar">
-                <button onClick={() => navigate("/")}>Close</button>
+                <button className="close-search" onClick={() => navigator("/")}>Close</button>
                 <div className="search-books-input-wrapper">
                     <input
                         type="text"
@@ -49,9 +66,10 @@ const SearchPage = ({ onUpdate, onSearch }) => {
                 <ol className="books-grid">
                     {books.map((book) => (
                         <li key={book.id}>
-                            <Book book={book}
-                                onUpdate={handleUpdate} />
-                           
+                            <Book
+                                book={book}
+                                handleShelfChanger={updateShelf}
+                            />
                         </li>
                     ))}
                 </ol>
