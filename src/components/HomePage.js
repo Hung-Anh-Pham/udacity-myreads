@@ -6,8 +6,8 @@ import * as BooksAPI from "../api/BooksAPI";
 
 const HomePage = () => {
 
-    const { none, ...shelfs } = Shelfs.getShelfs();
-    const [bookShelfs, setBookShelfs] = useState({});
+  const { none, ...shelfs } = Shelfs.getShelfs();
+  const [bookShelfs, setBookShelfs] = useState({});
 
   useEffect(() => {
 
@@ -57,44 +57,44 @@ const HomePage = () => {
     }
   };
 
-    return (
-        <div className="list-books">
+  return (
+    <div className="list-books">
 
-            <div className="list-books-title">
-                <h1>
-                    MyReads
-                </h1>
-            </div>
+      <div className="list-books-title">
+        <h1>
+          MyReads
+        </h1>
+      </div>
 
-            <div className="list-books-content">
-                {
-                    Object.keys(shelfs).map((shelf) => (
-                        <div key={shelf} className="bookshelf">
-                            <h2 className="bookshelf-title">{shelfs[shelf]}</h2>
-                            <div className="bookshelf-books">
-                                <ol className="books-grid">
-                                    {
-                                        Array.isArray(bookShelfs[shelf]) && bookShelfs[shelf]
-                                            .map(book => (
-                                                <li key={book.id}>
-                                                    <Book
-                                                        book={book}
-                                                        handleShelfChanger={updateShelf} />
-                                                </li>
-                                            ))
-                                    }
-                                </ol>
-                            </div>
-                        </div>
-                    ))
-                }
+      <div className="list-books-content">
+        {
+          Object.keys(shelfs).map((shelf) => (
+            <div key={shelf} className="bookshelf">
+              <h2 className="bookshelf-title">{shelfs[shelf]}</h2>
+              <div className="bookshelf-books">
+                <ol className="books-grid">
+                  {
+                    Array.isArray(bookShelfs[shelf]) && bookShelfs[shelf]
+                      .map(book => (
+                        <li key={book.id}>
+                          <Book
+                            book={book}
+                            handleShelfChanger={updateShelf} />
+                        </li>
+                      ))
+                  }
+                </ol>
+              </div>
             </div>
+          ))
+        }
+      </div>
 
-            <div className="open-search">
-                <Link to={"/search"}>Add a book</Link>
-            </div>
-        </div>
-    );
+      <div className="open-search">
+        <Link to={"/search"}>Add a book</Link>
+      </div>
+    </div>
+  );
 
 };
 
