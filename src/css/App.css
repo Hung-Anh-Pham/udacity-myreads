@@ -135,7 +135,8 @@ body,
 }
 
 .book-title,
-.book-authors {
+.book-authors,
+.message {
   font-size: 0.8em;
 }
 

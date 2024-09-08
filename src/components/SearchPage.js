@@ -1,39 +1,62 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import Book from "./Book";
 import * as BooksAPI from "../api/BooksAPI";
 import * as Shelfs from "../utils/Shelfs";
 
-const SearchPage = ({ navigator, maxResults }) => {
+const SearchPage = ({ navigator, maxResults, debounceDelay }) => {
 
+    const [searching, setSearching] = useState(false);
+    const [message, setMessage] = useState(null);
     const [query, setQuery] = useState("");
     const [books, setBooks] = useState([]);
 
     useEffect(() => {
-        // Check if the query is not null
         if (query) {
-            const fetchBooks = async () => {
-                try {
-                    const queriedBooks = await BooksAPI.search(query, maxResults);
-                    const currentBooks = await BooksAPI.getAll();
+            
+            // Set a timeout to delay the API call
+            const delayDebounceFn = setTimeout(
+                async () => {
 
-                    // Add shelfs into the queriedBooks
-                    const queriedBooksWithShelf = Shelfs.mapShelfToQueriedBook(currentBooks, queriedBooks);
-                    setBooks(queriedBooksWithShelf);
-                } catch (error) {
-                    console.log(error);
-                }
-            };
-            fetchBooks();
+                    // Update Search state
+                    setSearching(true);
+                    try {
+                        // Call API
+                        const response = await BooksAPI.search(query.trim(), maxResults);
+
+                        // Update Books state
+                        if (Array.isArray(response)) {
+                            const currentBooks = await BooksAPI.getAll();
+
+                            // Add bookshelves into the queriedBooks
+                            const mappedBookshelves = Shelfs.mapBookshelves(currentBooks, response);
+                            setBooks(mappedBookshelves);
+                            setBooks(response);
+                            setMessage(null);
+                        } else {
+                            setBooks([]);
+                            setMessage('Book Not Found');
+                        }
+                    } catch (error) {
+                        console.log(error)
+                        setMessage('An unexpected error occured.');
+                    } finally {
+                        setSearching(false);
+                    }
+                }, debounceDelay
+            );
+
+            // Cleanup function to clear the timeout if the user types again before delay finishes
+            return () => clearTimeout(delayDebounceFn);
         } else {
             setBooks([]);
         }
-    }, [query, maxResults]);
+    }, [query, maxResults, debounceDelay]);
 
-    const updateQuery = (query) => {
-        setQuery(query.trim());
+    const updateQuery = (event) => {
+        setQuery(event.target.value);
     }
 
-    const updateShelf = async (book, shelf) => {
+    const updateShelfOptions = async (book, shelf) => {
         try {
             // Update book shelf via API
             await BooksAPI.update(book, shelf);
@@ -58,20 +81,26 @@ const SearchPage = ({ navigator, maxResults }) => {
                         type="text"
                         placeholder="Search by title, author, or ISBN"
                         value={query}
-                        onChange={(e) => updateQuery(e.target.value)}
+                        onChange={updateQuery}
                     />
                 </div>
             </div>
             <div className="search-books-results">
                 <ol className="books-grid">
-                    {books.map((book) => (
-                        <li key={book.id}>
-                            <Book
-                                book={book}
-                                handleShelfChanger={updateShelf}
-                            />
-                        </li>
-                    ))}
+                    {
+                        searching && !message ? (<span> loading... </span>)
+                            : message ? (<div className="message"> {message} </div>)
+                                : (
+                                    books.map((book) => (
+                                        <li key={book.id}>
+                                            <Book
+                                                book={book}
+                                                handleShelfChanger={updateShelfOptions}
+                                            />
+                                        </li>
+                                    ))
+                                )
+                    }
                 </ol>
             </div>
         </div>

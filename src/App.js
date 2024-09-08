@@ -6,7 +6,7 @@ import SearchPage from "./components/SearchPage";
 function App() {
 
   const navigator = useNavigate();
-  
+
 
   return (
     <div className="app">
@@ -17,7 +17,9 @@ function App() {
           element={
             <SearchPage
               navigator={navigator}
-              maxResults={10}/>
+              maxResults={10}
+              debounceDelay={500}
+            />
           }
         />
 
